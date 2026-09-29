@@ -19,7 +19,7 @@ plugins {
 	// Maven Publisher
 	id 'maven-publish'
 	id 'signing'
-	id 'com.gradleup.nmcp.aggregation' version "1.6.1"
+	id 'com.gradleup.nmcp.aggregation' version "1.6.2"
 	// Official Azure Functions Gradle plugin: azureFunctionsRun / azureFunctionsDeploy
 	id "com.microsoft.azure.azurefunctions" version "1.16.1"
 }

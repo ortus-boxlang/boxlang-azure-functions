@@ -57,9 +57,13 @@ Only files under a `handlers/` directory (or listed in a build-time `manifest.js
 
 1. **`manifest.json`** at the function root, if present and valid — the build-time-generated source of truth. No filesystem scanning happens when this is present.
 2. **A one-time scan of `handlers/`**, if the manifest is missing or invalid but the directory exists. Supports nested routes, matched case-insensitively.
-3. **A one-time scan of the function root itself**, for backward compatibility with deployments that predate the `handlers/` convention. `Application.bx` and the default handler class are always excluded.
+3. **A one-time scan of the function root itself**, for backward compatibility with deployments that predate the `handlers/` convention — gated behind `BOXLANG_ENABLE_ROOT_SCAN` (default `true`; set to `false` to disable this fallback and restrict routing to the default `Lambda.bx` handler only). `Application.bx` and the default handler class are always excluded.
 
 Tiers 2 and 3 log a `WARNING` listing every handler they registered, so a missing or corrupt manifest is never a silent surprise.
+
+### Application Lifecycle
+
+The project's root `Application.bx` fires for **every** invocation — `onApplicationStart()` once per cold start, `onRequestStart()` before each request — regardless of whether `Lambda.bx` or a routed handler under `handlers/` ends up serving it. There's a single `Application.bx` per deployment, at the function root, never under `handlers/`.
 
 ### URI to Class Mapping Examples
 
@@ -123,6 +127,7 @@ The starter template's `generateManifest` Gradle task scans `handlers/` at build
 ```json
 {
   "manifestVersion": 1,
+  "defaultHandler": { "file": "Lambda.bx", "method": "run" },
   "handlers": {
     "products": { "file": "handlers/Products.bx" },
     "api/test": { "file": "handlers/api/Test.bx" }
@@ -130,6 +135,8 @@ The starter template's `generateManifest` Gradle task scans `handlers/` at build
   "reserved": [ "Application.bx", "Lambda.bx" ]
 }
 ```
+
+**`reserved` and `defaultHandler` are enforced, not just documentation**: the runtime actively rejects any `handlers` entry whose target file matches a name in `reserved` (merged with the built-in `Application.bx` and default-handler names), and `defaultHandler.file`/`method` is honored as the fallback handler for unmatched routes — falling back to `Lambda.bx`/`run()` when absent, invalid, or pointing at a file that doesn't exist. Every `handlers` entry's `file` is also checked for existence at cold start.
 
 ## 🛠️ Development Setup
 
@@ -199,6 +206,7 @@ Runtime behavior is controlled via environment variables:
 | `BOXLANG_AZURE_CLASS` | Override the default `Lambda.bx` path | *(unset)* |
 | `BOXLANG_AZURE_DEBUGMODE` | Enable verbose logging and disable class caching | `false` |
 | `BOXLANG_AZURE_CONFIG` | Path to a custom `boxlang.json` config | `boxlang.json` in root |
+| `BOXLANG_ENABLE_ROOT_SCAN` | Allow the legacy function-root routing fallback described in URI Routing above | `true`. Shared across every BoxLang serverless runtime (AWS/GCP/Azure). |
 
 ### Build System (Gradle)
 

@@ -341,4 +341,44 @@ public class AzureFunctionRunnerTest {
 		// have registered "foo" as a fallback, rather than the constructor throwing
 		assertThat( runner.getHandlerRoutes() ).containsKey( "foo" );
 	}
+
+	// =========================================================================
+	// Application.bx lifecycle
+	// =========================================================================
+
+	@Test
+	@DisplayName( "Application.bx onRequestStart fires for the default Lambda.bx handler" )
+	public void testApplicationLifecycleFiresForDefaultHandler() {
+		Path				testPath	= Path.of( "src", "test", "resources", "applicationLifecycle" );
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
+
+		MockHttpRequestMessage	req			= new MockHttpRequestMessage( "GET", "/" );
+		HttpResponseMessage		response	= runner.run( req, new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 200 );
+		String bodyStr = response.getBody().toString();
+		assertThat( bodyStr ).contains( "applicationBxFired" );
+		assertThat( bodyStr ).contains( "true" );
+	}
+
+	@Test
+	@DisplayName( "Application.bx onRequestStart also fires when URI routing dispatches to a handlers/ class" )
+	public void testApplicationLifecycleFiresForRoutedHandler() {
+		Path				testPath	= Path.of( "src", "test", "resources", "applicationLifecycle" );
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
+
+		// Sanity check: the request really is being routed to handlers/Products.bx, not
+		// silently falling back to the default Lambda.bx
+		assertThat( runner.getHandlerRoutes() ).containsKey( "products" );
+
+		MockHttpRequestMessage	req			= new MockHttpRequestMessage( "GET", "/products" );
+		HttpResponseMessage		response	= runner.run( req, new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 200 );
+		// Before the fix, Application.bx was looked up relative to handlers/, where it
+		// doesn't exist, so onRequestStart never fired and this would be false.
+		String bodyStr = response.getBody().toString();
+		assertThat( bodyStr ).contains( "applicationBxFired" );
+		assertThat( bodyStr ).contains( "true" );
+	}
 }

@@ -360,8 +360,11 @@ public class AzureFunctionRunner {
 		    false
 		);
 		RequestBoxContext.setCurrent( boxContext );
-		// Set up request threading context and application lifecycle
-		boxContext.loadApplicationDescriptor( FileSystemUtil.createFileUri( resolvedPathStr ) );
+		// Set up request threading context and application lifecycle. Application.bx always lives next to
+		// the root Lambda.bx, never inside handlers/, so we resolve it from the function root - not from
+		// whichever handler URI routing selected - or a routed handler would never see onRequestStart,
+		// datasources, or any other Application.bx setting.
+		boxContext.loadApplicationDescriptor( FileSystemUtil.createFileUri( this.defaultFunctionPath.toAbsolutePath().toString() ) );
 		RequestBoxContext		requestContext	= boxContext.getParentOfType( RequestBoxContext.class );
 		BaseApplicationListener	listener		= requestContext.getApplicationListener();
 

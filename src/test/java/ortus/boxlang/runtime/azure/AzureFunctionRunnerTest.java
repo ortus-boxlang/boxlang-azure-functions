@@ -349,8 +349,8 @@ public class AzureFunctionRunnerTest {
 	@Test
 	@DisplayName( "Application.bx onRequestStart fires for the default Lambda.bx handler" )
 	public void testApplicationLifecycleFiresForDefaultHandler() {
-		Path				testPath	= Path.of( "src", "test", "resources", "applicationLifecycle" );
-		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
+		Path					testPath	= Path.of( "src", "test", "resources", "applicationLifecycle" );
+		AzureFunctionRunner		runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
 
 		MockHttpRequestMessage	req			= new MockHttpRequestMessage( "GET", "/" );
 		HttpResponseMessage		response	= runner.run( req, new MockExecutionContext() );
@@ -389,7 +389,7 @@ public class AzureFunctionRunnerTest {
 	@Test
 	@DisplayName( "The legacy root-directory scan is on by default, matching prior releases" )
 	public void testRootScanEnabledByDefault() {
-		Path					testPath	= Path.of( "src", "test", "resources", "rootScanDisabled" );
+		Path				testPath	= Path.of( "src", "test", "resources", "rootScanDisabled" );
 		// null = defer to BOXLANG_ENABLE_ROOT_SCAN, which defaults to true when unset
 		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true, null );
 
@@ -399,7 +399,7 @@ public class AzureFunctionRunnerTest {
 	@Test
 	@DisplayName( "BOXLANG_ENABLE_ROOT_SCAN=false restricts the no-manifest/no-handlers fallback to the default handler only" )
 	public void testRootScanCanBeDisabled() {
-		Path					testPath	= Path.of( "src", "test", "resources", "rootScanDisabled" );
+		Path				testPath	= Path.of( "src", "test", "resources", "rootScanDisabled" );
 		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true, false );
 
 		// Transport.bx exists on disk at the root, but with root scanning disabled it must
@@ -424,7 +424,7 @@ public class AzureFunctionRunnerTest {
 	@Test
 	@DisplayName( "manifest.json cannot route to Application.bx, Lambda.bx, or its own declared reserved files" )
 	public void testManifestReservedListIsEnforced() {
-		Path					testPath	= Path.of( "src", "test", "resources", "manifestReservedEnforced" );
+		Path				testPath	= Path.of( "src", "test", "resources", "manifestReservedEnforced" );
 		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
 
 		assertThat( runner.getHandlerRoutes() ).doesNotContainKey( "application" );
@@ -448,7 +448,7 @@ public class AzureFunctionRunnerTest {
 	@DisplayName( "manifest.json defaultHandler.file/method is respected instead of the Lambda.bx/run() convention" )
 	public void testManifestDefaultHandlerIsRespected() {
 		Path					testPath	= Path.of( "src", "test", "resources", "manifestDefaultHandler" );
-		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
+		AzureFunctionRunner		runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
 
 		// No routes are declared, so every request falls through to the default handler -
 		// which the manifest overrides to handlers/Special.bx#handle(), not Lambda.bx#run()

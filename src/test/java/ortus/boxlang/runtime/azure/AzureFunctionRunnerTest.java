@@ -458,4 +458,17 @@ public class AzureFunctionRunnerTest {
 		assertThat( response.getStatus().value() ).isEqualTo( 200 );
 		assertThat( response.getBody().toString() ).contains( "manifest-declared default handler" );
 	}
+
+	@Test
+	@DisplayName( "manifest.json defaultHandler.file pointing at Application.bx hard-aborts cold start" )
+	public void testManifestDefaultHandlerReservedHardAborts() {
+		Path											testPath	= Path.of( "src", "test", "resources", "manifestDefaultHandlerReserved" );
+
+		AzureFunctionRunner.ReservedHandlerException	thrown		= assertThrows(
+		    AzureFunctionRunner.ReservedHandlerException.class,
+		    () -> new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true )
+		);
+		assertThat( thrown.getMessage() ).contains( "reserved" );
+		assertThat( thrown.getMessage() ).contains( "Application.bx" );
+	}
 }

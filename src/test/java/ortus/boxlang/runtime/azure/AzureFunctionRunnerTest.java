@@ -332,14 +332,15 @@ public class AzureFunctionRunnerTest {
 	}
 
 	@Test
-	@DisplayName( "A corrupt manifest.json falls back to the handlers/ directory scan instead of failing startup" )
-	public void testCorruptManifestFallsBackToDirectoryScan() {
+	@DisplayName( "A corrupt manifest.json restricts routing to the default handler only, instead of widening to a directory scan" )
+	public void testCorruptManifestRestrictsToDefaultHandlerOnly() {
 		Path				testPath	= Path.of( "src", "test", "resources", "corruptManifest" );
 		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
 
-		// manifest.json is invalid JSON; the handlers/Foo.bx directory scan should still
-		// have registered "foo" as a fallback, rather than the constructor throwing
-		assertThat( runner.getHandlerRoutes() ).containsKey( "foo" );
+		// manifest.json is invalid JSON, and a handlers/Foo.bx directory also exists - but a
+		// present-and-corrupt manifest.json is a build/deploy error, not license to widen
+		// routing by falling back to a directory scan. Only the default handler is reachable.
+		assertThat( runner.getHandlerRoutes() ).isEmpty();
 	}
 
 	// =========================================================================
@@ -457,5 +458,45 @@ public class AzureFunctionRunnerTest {
 
 		assertThat( response.getStatus().value() ).isEqualTo( 200 );
 		assertThat( response.getBody().toString() ).contains( "manifest-declared default handler" );
+	}
+
+	@Test
+	@DisplayName( "manifest.json defaultHandler.file pointing at Application.bx hard-aborts cold start" )
+	public void testManifestDefaultHandlerReservedHardAborts() {
+		Path											testPath	= Path.of( "src", "test", "resources", "manifestDefaultHandlerReserved" );
+
+		AzureFunctionRunner.ReservedHandlerException	thrown		= assertThrows(
+		    AzureFunctionRunner.ReservedHandlerException.class,
+		    () -> new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true )
+		);
+		assertThat( thrown.getMessage() ).contains( "reserved" );
+		assertThat( thrown.getMessage() ).contains( "Application.bx" );
+	}
+
+	@Test
+	@DisplayName( "manifest.json handlers[*].file cannot escape the function root via ../ path traversal" )
+	public void testManifestHandlerPathTraversalIsRejected() {
+		Path				testPath	= Path.of( "src", "test", "resources", "manifestPathTraversal", "app" );
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
+
+		// The manifest declares "secret" -> "../outside/Secret.bx"; despite that file
+		// genuinely existing, it must never be registered as a route since it resolves
+		// outside the function root.
+		assertThat( runner.getHandlerRoutes() ).doesNotContainKey( "secret" );
+	}
+
+	@Test
+	@DisplayName( "manifest.json defaultHandler.file cannot escape the function root via ../ path traversal" )
+	public void testManifestDefaultHandlerPathTraversalIsRejected() {
+		Path					testPath	= Path.of( "src", "test", "resources", "manifestDefaultHandlerTraversal", "app" );
+		AzureFunctionRunner		runner		= new AzureFunctionRunner( Path.of( testPath.toString(), "Lambda.bx" ), true );
+
+		// defaultHandler.file points outside the function root via ../ - the conventional
+		// Lambda.bx must remain in effect rather than the out-of-root Secret.bx
+		MockHttpRequestMessage	req			= new MockHttpRequestMessage( "GET", "/anything" );
+		HttpResponseMessage		response	= runner.run( req, new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 200 );
+		assertThat( response.getBody().toString() ).contains( "conventional default lambda" );
 	}
 }

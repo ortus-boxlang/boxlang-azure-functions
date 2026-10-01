@@ -65,6 +65,24 @@ Tiers 2 and 3 log a `WARNING` listing every handler they registered, so a missin
 
 The project's root `Application.bx` fires for **every** invocation — `onApplicationStart()` once per cold start, `onRequestStart()` before each request — regardless of whether `Lambda.bx` or a routed handler under `handlers/` ends up serving it. There's a single `Application.bx` per deployment, at the function root, never under `handlers/`.
 
+`run()`, `onRequestEnd` and `onError` all receive the same `response` struct as their last argument. A returned value is stored in `response.body` before `onRequestEnd` runs, so a hook can wrap it, and a handled error defaults to status `500` unless `onError` sets one:
+
+```js
+class {
+
+    function onRequestEnd( target, event, context, response ) {
+        response.body = { ok: true, data: response.body }
+    }
+
+    function onError( exception, eventName, event, context, response ) {
+        response.body = { ok: false, error: exception.message }
+    }
+
+}
+```
+
+If `Application.bx` defines `onError`, the error counts as handled; rethrow from the hook to fail the invocation.
+
 ### URI to Class Mapping Examples
 
 | Incoming URI | Handler File | Description |

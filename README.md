@@ -30,6 +30,44 @@ This repository contains the **core Azure Functions Runtime** for the BoxLang la
 
 > 💡 **For creating Azure Functions projects**: Use our [BoxLang Azure Functions Template](https://github.com/ortus-boxlang/boxlang-starter-azure-functions) to quickly bootstrap new serverless applications.
 
+## ⚡ Quick Cheatsheet
+
+```js
+// src/main/bx/handlers/Products.bx  ->  /products
+class {
+    function run( event, context, response ) {
+        return { id: 1 }                      // becomes response.body
+    }
+    function byId( event, context, response ) { }  // header: x-bx-function: byId
+}
+```
+
+| I want to | Do this |
+|---|---|
+| Add a route | Create `.bx` files under `handlers/`: `/products` is `handlers/Products.bx`, `/user-profiles` is `handlers/UserProfiles.bx`, `/api/test` is `handlers/api/Test.bx` |
+| Handle everything else | `Lambda.bx` at the root is the default handler for unmatched routes |
+| Call another method | Send the `x-bx-function: methodName` header (public or remote methods only) |
+| Run code on every request | Root `Application.bx`: `onApplicationStart` (cold start), `onRequestStart`, `onRequestEnd`, `onError` |
+| Wrap results and errors | `onRequestEnd( target, event, context, response )` and `onError( exception, eventName, event, context, response )`: set `response.body` |
+| Set status, headers, cookies | `response.statusCode`, `response.headers`, `response.cookies` |
+| Fail the invocation on an error | Do not define `onError`, or rethrow from it. A defined `onError` always counts as handled |
+
+**Status codes:** a handled error defaults to `500` unless `onError` sets `response.statusCode`. Errors with no `onError` fail the invocation.
+
+**Routing order (built once at cold start):** `manifest.json`, then the `handlers/` directory, then the legacy root scan (`BOXLANG_ENABLE_ROOT_SCAN`). `Application.bx` and the default handler are never routable. A corrupt `manifest.json` restricts routing to the default handler only, and its paths are confined to the root.
+
+**Hard aborts at cold start:**
+
+* `manifest.json` `defaultHandler.file` set to `Application.bx`
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `BOXLANG_AZURE_ROOT` | Root directory for `.bx` files | `AzureWebJobsScriptRoot`, else `/home/site/wwwroot` |
+| `BOXLANG_AZURE_CLASS` | Override the default handler path | unset |
+| `BOXLANG_AZURE_DEBUGMODE` | Verbose logging, no class caching | `false` |
+| `BOXLANG_AZURE_CONFIG` | Custom `boxlang.json` path | `boxlang.json` in root |
+| `BOXLANG_ENABLE_ROOT_SCAN` | Allow the legacy root-directory routing fallback | `true` |
+
 ## 🏗️ Architecture Overview
 
 The runtime consists of:
@@ -64,6 +102,24 @@ Tiers 2 and 3 log a `WARNING` listing every handler they registered, so a missin
 ### Application Lifecycle
 
 The project's root `Application.bx` fires for **every** invocation — `onApplicationStart()` once per cold start, `onRequestStart()` before each request — regardless of whether `Lambda.bx` or a routed handler under `handlers/` ends up serving it. There's a single `Application.bx` per deployment, at the function root, never under `handlers/`.
+
+`run()`, `onRequestEnd` and `onError` all receive the same `response` struct as their last argument. A returned value is stored in `response.body` before `onRequestEnd` runs, so a hook can wrap it, and a handled error defaults to status `500` unless `onError` sets one:
+
+```js
+class {
+
+    function onRequestEnd( target, event, context, response ) {
+        response.body = { ok: true, data: response.body }
+    }
+
+    function onError( exception, eventName, event, context, response ) {
+        response.body = { ok: false, error: exception.message }
+    }
+
+}
+```
+
+If `Application.bx` defines `onError`, the error counts as handled; rethrow from the hook to fail the invocation.
 
 ### URI to Class Mapping Examples
 

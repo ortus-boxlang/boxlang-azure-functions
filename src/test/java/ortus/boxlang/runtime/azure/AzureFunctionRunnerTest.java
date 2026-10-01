@@ -499,4 +499,54 @@ public class AzureFunctionRunnerTest {
 		assertThat( response.getStatus().value() ).isEqualTo( 200 );
 		assertThat( response.getBody().toString() ).contains( "conventional default lambda" );
 	}
+	// =========================================================================
+	// Response struct in onRequestEnd / onError, and the handled-error status
+	// =========================================================================
+
+	private static Path responseFixture( String name ) {
+		return Path.of( "src", "test", "resources", name, "Lambda.bx" );
+	}
+
+	private static String compact( Object body ) {
+		return body.toString().replaceAll( "\\s+", "" );
+	}
+
+	@Test
+	@DisplayName( "onRequestEnd receives the response struct and can wrap the body" )
+	public void testOnRequestEndCanWrapTheBody() {
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( responseFixture( "responseHooks" ), true );
+		HttpResponseMessage	response	= runner.run( new MockHttpRequestMessage( "GET", "/" ), new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 200 );
+		assertThat( compact( response.getBody() ) ).contains( "\"ok\":true" );
+		assertThat( compact( response.getBody() ) ).contains( "\"name\":\"Luis\"" );
+	}
+
+	@Test
+	@DisplayName( "A handled error defaults to 500 with the onError body, instead of a 200" )
+	public void testHandledErrorDefaultsTo500() {
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( responseFixture( "responseHooks" ), true );
+		HttpResponseMessage	response	= runner.run( new MockHttpRequestMessage( "GET", "/fail" ), new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 500 );
+		assertThat( compact( response.getBody() ) ).contains( "\"ok\":false" );
+		assertThat( compact( response.getBody() ) ).contains( "\"error\":\"boom\"" );
+	}
+
+	@Test
+	@DisplayName( "onError can override the default 500 status through the response struct" )
+	public void testOnErrorCanOverrideTheStatus() {
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( responseFixture( "responseHooks" ), true );
+		HttpResponseMessage	response	= runner.run( new MockHttpRequestMessage( "GET", "/fail-missing" ), new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 404 );
+	}
+
+	@Test
+	@DisplayName( "An unhandled error (no onError) still fails the invocation" )
+	public void testUnhandledErrorStillThrows() {
+		AzureFunctionRunner runner = new AzureFunctionRunner( responseFixture( "responseNoOnError" ), true );
+
+		assertThrows( RuntimeException.class, () -> runner.run( new MockHttpRequestMessage( "GET", "/" ), new MockExecutionContext() ) );
+	}
 }

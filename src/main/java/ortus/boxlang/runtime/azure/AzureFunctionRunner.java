@@ -455,6 +455,12 @@ public class AzureFunctionRunner {
 			    false
 			);
 
+			// A returned value becomes the response body. This happens before onRequestEnd so
+			// that hook sees (and can wrap or replace) the body.
+			if ( functionResult != null ) {
+				responseStruct.put( Key.body, functionResult );
+			}
+
 		} catch ( AbortException e ) {
 
 			if ( debugMode ) {
@@ -481,7 +487,7 @@ public class AzureFunctionRunner {
 
 			// Application lifecycle: onRequestEnd
 			try {
-				listener.onRequestEnd( boxContext, new Object[] { resolvedPathStr, eventStruct, azureContext } );
+				listener.onRequestEnd( boxContext, new Object[] { resolvedPathStr, eventStruct, azureContext, responseStruct } );
 			} catch ( Throwable e ) {
 				errorToHandle = e;
 			}
@@ -492,8 +498,12 @@ public class AzureFunctionRunner {
 			if ( errorToHandle != null ) {
 				System.err.println( "[BoxLang Azure] Error: " + errorToHandle.getMessage() );
 
+				// A handled error must not look like a success: default the status to 500 and
+				// let onError override it (and the body) through the response struct.
+				responseStruct.put( Key.statusCode, 500 );
+
 				try {
-					if ( !listener.onError( boxContext, new Object[] { errorToHandle, "", eventStruct, azureContext } ) ) {
+					if ( !listener.onError( boxContext, new Object[] { errorToHandle, "", eventStruct, azureContext, responseStruct } ) ) {
 						throw new RuntimeException( errorToHandle );
 					}
 				} catch ( Throwable t ) {
@@ -503,11 +513,6 @@ public class AzureFunctionRunner {
 			}
 
 			boxContext.flushBuffer( false );
-		}
-
-		// If the handler returned a value directly, place it in the body
-		if ( functionResult != null ) {
-			responseStruct.put( "body", functionResult );
 		}
 
 		if ( debugMode ) {

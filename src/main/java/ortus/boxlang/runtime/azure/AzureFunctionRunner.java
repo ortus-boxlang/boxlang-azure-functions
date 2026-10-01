@@ -445,7 +445,7 @@ public class AzureFunctionRunner {
 			Key functionMethod = getFunctionMethod( eventStruct );
 
 			// Application lifecycle: onRequestStart
-			listener.onRequestStart( boxContext, new Object[] { resolvedPathStr, eventStruct, azureContext } );
+			listener.onRequestStart( boxContext, new Object[] { resolvedPathStr, eventStruct, azureContext, responseStruct } );
 
 			// Invoke the BoxLang handler method
 			functionResult = function.dereferenceAndInvoke(
@@ -468,7 +468,7 @@ public class AzureFunctionRunner {
 			}
 
 			try {
-				listener.onAbort( boxContext, new Object[] { resolvedPathStr, eventStruct, azureContext } );
+				listener.onAbort( boxContext, new Object[] { resolvedPathStr, eventStruct, azureContext, responseStruct } );
 			} catch ( Throwable ae ) {
 				errorToHandle = ae;
 			}

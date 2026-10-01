@@ -549,4 +549,23 @@ public class AzureFunctionRunnerTest {
 
 		assertThrows( RuntimeException.class, () -> runner.run( new MockHttpRequestMessage( "GET", "/" ), new MockExecutionContext() ) );
 	}
+
+	@Test
+	@DisplayName( "onRequestStart receives the response struct, so it can set the status and body before the handler runs" )
+	public void testOnRequestStartCanWriteTheResponse() {
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( responseFixture( "responseStartHook" ), true );
+		HttpResponseMessage	response	= runner.run( new MockHttpRequestMessage( "GET", "/" ), new MockExecutionContext() );
+
+		assertThat( response.getStatus().value() ).isEqualTo( 202 );
+		assertThat( response.getBody().toString() ).contains( "from-start" );
+	}
+
+	@Test
+	@DisplayName( "onAbort receives the response struct" )
+	public void testOnAbortReceivesTheResponse() {
+		AzureFunctionRunner	runner		= new AzureFunctionRunner( responseFixture( "responseAbortHook" ), true );
+		HttpResponseMessage	response	= runner.run( new MockHttpRequestMessage( "GET", "/" ), new MockExecutionContext() );
+
+		assertThat( compact( response.getBody() ) ).contains( "\"aborted\":true" );
+	}
 }

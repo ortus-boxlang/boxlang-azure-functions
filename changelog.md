@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-02
+
 ### Added
 
 - Initial release: BoxLang Azure Functions Runtime, structurally identical to `boxlang-aws-lambda` and `boxlang-google-functions` — same `handlers/` directory convention, `manifest.json` build-time routing manifest with a 3-tier resolution order (manifest → `handlers/` scan → legacy root scan), `x-bx-function` header method dispatch, and `run(event, context, response)` handler contract. `.bx` handler files run unmodified across all three runtimes.
@@ -32,3 +34,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Setting `defaultHandler.file` to `Application.bx` now aborts cold start with a clear error instead of crashing with `duplicate element` and leaving the reserved file in effect as the default handler.
 
 [unreleased]: https://github.com/ortus-boxlang/boxlang-azure-functions/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/ortus-boxlang/boxlang-azure-functions/compare/d254c500f23d2f7b741ad2930b4f638704379d33...v1.0.0

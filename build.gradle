@@ -21,7 +21,7 @@ plugins {
 	id 'signing'
 	id 'com.gradleup.nmcp.aggregation' version "1.6.2"
 	// Official Azure Functions Gradle plugin: azureFunctionsRun / azureFunctionsDeploy
-	id "com.microsoft.azure.azurefunctions" version "1.17.0"
+	id "com.microsoft.azure.azurefunctions" version "1.18.0"
     // CycloneDX SBOM generation
     id "org.cyclonedx.bom" version "2.3.1"
 }

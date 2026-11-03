@@ -374,6 +374,18 @@ Set `BOXLANG_AZURE_DEBUGMODE=true` to enable verbose logging and disable class c
 - **AWS Lambda Runtime** - [boxlang-aws-lambda](https://github.com/ortus-boxlang/boxlang-aws-lambda)
 - **Google Cloud Functions Runtime** - [boxlang-google-functions](https://github.com/ortus-boxlang/boxlang-google-functions)
 
+## Software Bill of Materials (SBOM)
+
+Every release publishes a [CycloneDX](https://cyclonedx.org/) SBOM that lists the runtime dependencies of this artifact.
+
+- **Files:** `boxlang-azure-functions-<version>.cdx.json` and `boxlang-azure-functions-<version>.cdx.json.sha256`
+- **Where:** next to the other release artifacts at `https://downloads.ortussolutions.com/ortussolutions/boxlang-runtimes/boxlang-azure-functions/<version>/`, and attached to the GitHub release.
+- **Verify:** `sha256sum -c boxlang-azure-functions-<version>.cdx.json.sha256`
+- **Scan:** `grype sbom:boxlang-azure-functions-<version>.cdx.json`
+- **Scope:** runtime dependencies only (no test dependencies), generated from the resolved dependency graph and not from the shaded jar. The bundled BoxLang jar is not listed, so audit this artifact together with the BoxLang SBOM for the matching release.
+
+See the [SBOM documentation](https://boxlang.ortusbooks.com/getting-started/configuration/security#software-bill-of-materials-sbom) for details.
+
 ## License
 
 Apache License, Version 2.0.

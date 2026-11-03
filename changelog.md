@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-03
+
 ## [1.0.0] - 2026-10-02
 
 ### Added
@@ -33,5 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `manifest.json` handler and `defaultHandler` paths are normalized and confined to the deployment root, so `../` can no longer route to files outside it.
 - Setting `defaultHandler.file` to `Application.bx` now aborts cold start with a clear error instead of crashing with `duplicate element` and leaving the reserved file in effect as the default handler.
 
-[unreleased]: https://github.com/ortus-boxlang/boxlang-azure-functions/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/ortus-boxlang/boxlang-azure-functions/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ortus-boxlang/boxlang-azure-functions/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ortus-boxlang/boxlang-azure-functions/compare/d254c500f23d2f7b741ad2930b4f638704379d33...v1.0.0

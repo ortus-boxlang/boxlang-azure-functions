@@ -23,7 +23,7 @@ plugins {
 	// Official Azure Functions Gradle plugin: azureFunctionsRun / azureFunctionsDeploy
 	id "com.microsoft.azure.azurefunctions" version "1.17.0"
     // CycloneDX SBOM generation
-    id "org.cyclonedx.bom" version "2.3.1"
+    id "org.cyclonedx.bom" version "3.5.1"
 }
 
 /**
